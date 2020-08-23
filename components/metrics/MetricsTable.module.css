@@ -9,20 +9,22 @@
 
 .header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   line-height: 40px;
-  cursor: pointer;
 }
 
 .title {
-  flex: 1;
+  display: flex;
   font-weight: 600;
   font-size: var(--font-size-normal);
 }
 
-.heading {
+.metric {
   font-size: var(--font-size-small);
   text-align: center;
   width: 100px;
+  cursor: pointer;
 }
 
 .row {
@@ -56,6 +58,7 @@
   text-align: right;
   margin-right: 10px;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .percent {

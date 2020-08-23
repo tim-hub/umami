@@ -1,6 +1,10 @@
 FROM node:12.18-alpine
 
-ENV DATABASE_URL "postgresql://umami:umami@db:5432/umami"
+ARG DATABASE_TYPE
+
+ENV DATABASE_URL "postgresql://umami:umami@db:5432/umami" \
+    DATABASE_TYPE=$DATABASE_TYPE
+
 WORKDIR /app
 EXPOSE 3000
 

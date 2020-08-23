@@ -7,35 +7,38 @@ import Arrow from 'assets/arrow-right.svg';
 import { get } from 'lib/web';
 import { percentFilter } from 'lib/filters';
 import { formatNumber, formatLongNumber } from 'lib/format';
-import styles from './RankingsChart.module.css';
+import styles from './MetricsTable.module.css';
 
-export default function RankingsChart({
+export default function MetricsTable({
   title,
+  metric,
   websiteId,
   startDate,
   endDate,
   type,
-  heading,
   className,
   dataFilter,
+  filterOptions,
   limit,
+  headerComponent,
   onDataLoad = () => {},
   onExpand = () => {},
 }) {
   const [data, setData] = useState();
   const [format, setFormat] = useState(true);
   const formatFunc = format ? formatLongNumber : formatNumber;
+  const shouldAnimate = limit > 0;
 
   const rankings = useMemo(() => {
     if (data) {
-      const items = dataFilter ? dataFilter(data) : data;
+      const items = percentFilter(dataFilter ? dataFilter(data, filterOptions) : data);
       if (limit) {
         return items.filter((e, i) => i < limit);
       }
       return items;
     }
     return [];
-  }, [data]);
+  }, [data, dataFilter, filterOptions]);
 
   async function loadData() {
     const data = await get(`/api/website/${websiteId}/rankings`, {
@@ -44,23 +47,31 @@ export default function RankingsChart({
       type,
     });
 
-    const updated = percentFilter(data);
-
-    setData(updated);
-    onDataLoad(updated);
+    setData(data);
+    onDataLoad(data);
   }
 
   function handleSetFormat() {
     setFormat(state => !state);
   }
 
+  function getRow(x, y, z) {
+    return (
+      <AnimatedRow
+        key={x}
+        label={x}
+        value={y}
+        percent={z}
+        animate={shouldAnimate}
+        format={formatFunc}
+        onClick={handleSetFormat}
+      />
+    );
+  }
+
   const Row = ({ index, style }) => {
     const { x, y, z } = rankings[index];
-    return (
-      <div style={style}>
-        <AnimatedRow key={x} label={x} value={y} percent={z} animate={limit} format={formatFunc} />
-      </div>
-    );
+    return <div style={style}>{getRow(x, y, z)}</div>;
   };
 
   useEffect(() => {
@@ -75,22 +86,16 @@ export default function RankingsChart({
 
   return (
     <div className={classNames(styles.container, className)}>
-      <div className={styles.header} onClick={handleSetFormat}>
+      <div className={styles.header}>
         <div className={styles.title}>{title}</div>
-        <div className={styles.heading}>{heading}</div>
+        {headerComponent}
+        <div className={styles.metric} onClick={handleSetFormat}>
+          {metric}
+        </div>
       </div>
       <div className={styles.body}>
         {limit ? (
-          rankings.map(({ x, y, z }) => (
-            <AnimatedRow
-              key={x}
-              label={x}
-              value={y}
-              percent={z}
-              animate={limit}
-              format={formatFunc}
-            />
-          ))
+          rankings.map(({ x, y, z }) => getRow(x, y, z))
         ) : (
           <FixedSizeList height={600} itemCount={rankings.length} itemSize={30}>
             {Row}
@@ -108,7 +113,7 @@ export default function RankingsChart({
   );
 }
 
-const AnimatedRow = ({ label, value = 0, percent, animate, format }) => {
+const AnimatedRow = ({ label, value = 0, percent, animate, format, onClick }) => {
   const props = useSpring({
     width: percent,
     y: value,
@@ -118,8 +123,10 @@ const AnimatedRow = ({ label, value = 0, percent, animate, format }) => {
 
   return (
     <div className={styles.row}>
-      <div className={styles.label}>{label}</div>
-      <animated.div className={styles.value}>{props.y?.interpolate(format)}</animated.div>
+      <div className={styles.label}>{decodeURI(label)}</div>
+      <div className={styles.value} onClick={onClick}>
+        <animated.div className={styles.value}>{props.y?.interpolate(format)}</animated.div>
+      </div>
       <div className={styles.percent}>
         <animated.div
           className={styles.bar}
