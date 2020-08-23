@@ -13,21 +13,11 @@ A detailed getting started guide can be found at [https://umami.is/docs/](https:
 - A server with Node.js 10.13 or newer
 - A database (MySQL or Postgresql)
 
-### Get the source code
+### Get the source code and install packages
 
 ```
 git clone https://github.com/mikecao/umami.git
-```
-
-### Go into the repo folder
-
-```
 cd umami
-```
-
-### Install packages
-
-```
 npm install
 ```
 
@@ -68,23 +58,7 @@ mysql://username:mypassword@localhost:3306/mydb
 
 The `HASH_SALT` is used to generate unique values for your installation.
 
-### Generate database client
-
-Depending on your database type, run the appropriate script.
-
-For MySQL:
-
-```
-npm run build-mysql-client
-```
-
-For Postgresql:
-
-```
-npm run build-postgresql-client
-```
-
-### Create a production build
+### Build the application
 
 ```
 npm run build
