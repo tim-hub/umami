@@ -13,10 +13,11 @@ import { post, hook, doNotTrack } from '../lib/web';
 
   const script = document.querySelector('script[data-website-id]');
 
-  if (!script || doNotTrack()) return;
+  // eslint-disable-next-line no-undef
+  if (!script || (__DNT__ && doNotTrack())) return;
 
   const website = script.getAttribute('data-website-id');
-  const hostUrl = new URL(script.src).origin;
+  const hostUrl = new URL(script.src).href.split('/').slice(0, -1).join('/');
   const screen = `${width}x${height}`;
   const listeners = [];
 
