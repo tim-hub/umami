@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { FormattedMessage } from 'react-intl';
 import classNames from 'classnames';
 import WebsiteChart from 'components/metrics/WebsiteChart';
 import WorldMap from 'components/common/WorldMap';
 import Page from 'components/layout/Page';
-import WebsiteHeader from 'components/metrics/WebsiteHeader';
 import MenuLayout from 'components/layout/MenuLayout';
 import Button from 'components/common/Button';
-import { getDateRange } from 'lib/date';
-import { get } from 'lib/web';
 import Arrow from 'assets/arrow-right.svg';
 import styles from './WebsiteDetails.module.css';
 import PagesTable from './metrics/PagesTable';
@@ -18,15 +16,15 @@ import DevicesTable from './metrics/DevicesTable';
 import CountriesTable from './metrics/CountriesTable';
 import EventsTable from './metrics/EventsTable';
 import EventsChart from './metrics/EventsChart';
+import useFetch from 'hooks/useFetch';
+import Loading from 'components/common/Loading';
 
-export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' }) {
-  const [data, setData] = useState();
+export default function WebsiteDetails({ websiteId }) {
+  const { data } = useFetch(`/api/website/${websiteId}`);
   const [chartLoaded, setChartLoaded] = useState(false);
   const [countryData, setCountryData] = useState();
   const [eventsData, setEventsData] = useState();
-  const [dateRange, setDateRange] = useState(getDateRange(defaultDateRange));
   const [expand, setExpand] = useState();
-  const { startDate, endDate, unit } = dateRange;
 
   const BackButton = () => (
     <Button
@@ -35,7 +33,9 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
       size="xsmall"
       onClick={() => setExpand(null)}
     >
-      <div>Back</div>
+      <div>
+        <FormattedMessage id="button.back" defaultMessage="Back" />
+      </div>
     </Button>
   );
 
@@ -43,28 +43,45 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
     {
       render: BackButton,
     },
-    { label: 'Pages', value: 'url', component: PagesTable },
-    { label: 'Referrers', value: 'referrer', component: ReferrersTable },
-    { label: 'Browsers', value: 'browser', component: BrowsersTable },
-    { label: 'Operating system', value: 'os', component: OSTable },
-    { label: 'Devices', value: 'device', component: DevicesTable },
     {
-      label: 'Countries',
-      value: 'country',
-      component: props => <CountriesTable {...props} onDataLoad={data => setCountryData(data)} />,
+      label: <FormattedMessage id="metrics.pages" defaultMessage="Pages" />,
+      value: 'url',
+      component: PagesTable,
     },
-    { label: 'Events', value: 'event', component: EventsTable },
+    {
+      label: <FormattedMessage id="metrics.referrers" defaultMessage="Referrers" />,
+      value: 'referrer',
+      component: ReferrersTable,
+    },
+    {
+      label: <FormattedMessage id="metrics.browsers" defaultMessage="Browsers" />,
+      value: 'browser',
+      component: BrowsersTable,
+    },
+    {
+      label: <FormattedMessage id="metrics.operating-system" defaultMessage="Operating system" />,
+      value: 'os',
+      component: OSTable,
+    },
+    {
+      label: <FormattedMessage id="metrics.devices" defaultMessage="Devices" />,
+      value: 'device',
+      component: DevicesTable,
+    },
+    {
+      label: <FormattedMessage id="metrics.countries" defaultMessage="Countries" />,
+      value: 'country',
+      component: CountriesTable,
+    },
+    {
+      label: <FormattedMessage id="metrics.events" defaultMessage="Events" />,
+      value: 'event',
+      component: EventsTable,
+    },
   ];
 
-  const dataProps = {
-    websiteId,
-    startDate,
-    endDate,
-    unit,
-  };
-
   const tableProps = {
-    ...dataProps,
+    websiteId,
     websiteDomain: data?.domain,
     limit: 10,
     onExpand: handleExpand,
@@ -76,16 +93,10 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
     return menuOptions.find(e => e.value === value);
   }
 
-  async function loadData() {
-    setData(await get(`/api/website/${websiteId}`));
-  }
-
   function handleDataLoad() {
-    if (!chartLoaded) setTimeout(() => setChartLoaded(true), 300);
-  }
-
-  function handleDateChange(values) {
-    setTimeout(() => setDateRange(values), 300);
+    if (!chartLoaded) {
+      setTimeout(() => setChartLoaded(true), 300);
+    }
   }
 
   function handleExpand(value) {
@@ -96,12 +107,6 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
     setExpand(getSelectedMenuOption(value));
   }
 
-  useEffect(() => {
-    if (websiteId) {
-      loadData();
-    }
-  }, [websiteId]);
-
   if (!data) {
     return null;
   }
@@ -110,15 +115,16 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
     <Page>
       <div className="row">
         <div className={classNames(styles.chart, 'col')}>
-          <WebsiteHeader websiteId={websiteId} name={data.name} showLink={false} />
           <WebsiteChart
             websiteId={websiteId}
+            title={data.name}
             onDataLoad={handleDataLoad}
-            onDateChange={handleDateChange}
+            showLink={false}
             stickyHeader
           />
         </div>
       </div>
+      {!chartLoaded && <Loading />}
       {chartLoaded && !expand && (
         <>
           <div className={classNames(styles.row, 'row')}>
@@ -155,7 +161,7 @@ export default function WebsiteDetails({ websiteId, defaultDateRange = '7day' })
               <EventsTable {...tableProps} onDataLoad={setEventsData} />
             </div>
             <div className="col-12 col-md-12 col-lg-8 pt-5 pb-5">
-              <EventsChart {...dataProps} />
+              <EventsChart websiteId={websiteId} />
             </div>
           </div>
         </>

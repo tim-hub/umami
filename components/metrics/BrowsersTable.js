@@ -1,16 +1,15 @@
 import React from 'react';
+import { FormattedMessage } from 'react-intl';
 import MetricsTable from './MetricsTable';
 import { browserFilter } from 'lib/filters';
 
-export default function BrowsersTable({ websiteId, startDate, endDate, limit, onExpand }) {
+export default function BrowsersTable({ websiteId, limit, onExpand }) {
   return (
     <MetricsTable
-      title="Browsers"
+      title={<FormattedMessage id="metrics.browsers" defaultMessage="Browsers" />}
       type="browser"
-      metric="Visitors"
+      metric={<FormattedMessage id="metrics.visitors" defaultMessage="Visitors" />}
       websiteId={websiteId}
-      startDate={startDate}
-      endDate={endDate}
       limit={limit}
       dataFilter={browserFilter}
       onExpand={onExpand}

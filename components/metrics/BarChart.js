@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactTooltip from 'react-tooltip';
 import classNames from 'classnames';
 import ChartJS from 'chart.js';
+import { formatLongNumber } from 'lib/format';
+import { dateFormat } from 'lib/lang';
+import useLocale from 'hooks/useLocale';
 import styles from './BarChart.module.css';
-import { format } from 'date-fns';
 
 export default function BarChart({
   chartId,
@@ -20,27 +22,41 @@ export default function BarChart({
   const canvas = useRef();
   const chart = useRef();
   const [tooltip, setTooltip] = useState({});
+  const [locale] = useLocale();
 
-  const renderLabel = (label, index, values) => {
+  function renderXLabel(label, index, values) {
     const d = new Date(values[index].value);
-    const n = records;
+    const w = canvas.current.width;
 
     switch (unit) {
       case 'hour':
-        return format(d, 'ha');
+        return dateFormat(d, 'ha', locale);
       case 'day':
-        if (n >= 15) {
-          return index % ~~(n / 15) === 0 ? format(d, 'MMM d') : '';
+        if (records > 31) {
+          if (w <= 500) {
+            return index % 10 === 0 ? dateFormat(d, 'M/d', locale) : '';
+          }
+          return index % 5 === 0 ? dateFormat(d, 'M/d', locale) : '';
         }
-        return format(d, 'EEE M/d');
+        if (w <= 500) {
+          return index % 2 === 0 ? dateFormat(d, 'MMM d', locale) : '';
+        }
+        return dateFormat(d, 'EEE M/d', locale);
       case 'month':
-        return format(d, 'MMMM');
+        if (w <= 660) {
+          return dateFormat(d, 'MMM', locale);
+        }
+        return dateFormat(d, 'MMMM', locale);
       default:
         return label;
     }
-  };
+  }
 
-  const renderTooltip = model => {
+  function renderYLabel(label) {
+    return +label > 1 ? formatLongNumber(label) : label;
+  }
+
+  function renderTooltip(model) {
     const { opacity, title, body, labelColors } = model;
 
     if (!opacity) {
@@ -48,16 +64,22 @@ export default function BarChart({
     } else {
       const [label, value] = body[0].lines[0].split(':');
 
+      console.log(
+        +title[0],
+        new Date(+title[0]),
+        dateFormat(new Date(+title[0]), 'EEE MMMM d yyyy', locale),
+      );
+
       setTooltip({
-        title: title[0],
+        title: dateFormat(new Date(+title[0]), 'EEE MMMM d yyyy', locale),
         value,
         label,
         labelColor: labelColors[0].backgroundColor,
       });
     }
-  };
+  }
 
-  const createChart = () => {
+  function createChart() {
     const options = {
       animation: {
         duration: animationDuration,
@@ -79,10 +101,10 @@ export default function BarChart({
             distribution: 'series',
             time: {
               unit,
-              tooltipFormat: 'ddd MMMM DD YYYY',
+              tooltipFormat: 'x',
             },
             ticks: {
-              callback: renderLabel,
+              callback: renderXLabel,
               minRotation: 0,
               maxRotation: 0,
             },
@@ -96,6 +118,7 @@ export default function BarChart({
         yAxes: [
           {
             ticks: {
+              callback: renderYLabel,
               beginAtZero: true,
             },
             stacked,
@@ -113,17 +136,18 @@ export default function BarChart({
       },
       options,
     });
-  };
+  }
 
-  const updateChart = () => {
+  function updateChart() {
     const { options } = chart.current;
 
     options.scales.xAxes[0].time.unit = unit;
-    options.scales.xAxes[0].ticks.callback = renderLabel;
+    options.scales.xAxes[0].ticks.callback = renderXLabel;
     options.animation.duration = animationDuration;
+    options.tooltips.custom = renderTooltip;
 
     onUpdate(chart.current);
-  };
+  }
 
   useEffect(() => {
     if (datasets) {
@@ -134,7 +158,7 @@ export default function BarChart({
         updateChart();
       }
     }
-  }, [datasets, unit, animationDuration]);
+  }, [datasets, unit, animationDuration, locale]);
 
   return (
     <>

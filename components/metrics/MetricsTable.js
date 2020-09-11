@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { FixedSizeList } from 'react-window';
 import { useSpring, animated, config } from 'react-spring';
 import classNames from 'classnames';
 import Button from 'components/common/Button';
+import Loading from 'components/common/Loading';
+import NoData from 'components/common/NoData';
+import useFetch from 'hooks/useFetch';
 import Arrow from 'assets/arrow-right.svg';
-import { get } from 'lib/web';
 import { percentFilter } from 'lib/filters';
 import { formatNumber, formatLongNumber } from 'lib/format';
+import { useDateRange } from 'hooks/useDateRange';
 import styles from './MetricsTable.module.css';
-import Loading from '../common/Loading';
 
 export default function MetricsTable({
-  title,
-  metric,
   websiteId,
   websiteDomain,
-  startDate,
-  endDate,
+  title,
+  metric,
   type,
   className,
   dataFilter,
@@ -27,7 +28,18 @@ export default function MetricsTable({
   onDataLoad = () => {},
   onExpand = () => {},
 }) {
-  const [data, setData] = useState();
+  const dateRange = useDateRange(websiteId);
+  const { startDate, endDate, modified } = dateRange;
+  const { data } = useFetch(
+    `/api/website/${websiteId}/rankings`,
+    {
+      type,
+      start_at: +startDate,
+      end_at: +endDate,
+      domain: websiteDomain,
+    },
+    { onDataLoad, delay: 300, update: [modified] },
+  );
   const [format, setFormat] = useState(true);
   const formatFunc = format ? formatLongNumber : formatNumber;
   const shouldAnimate = limit > 0;
@@ -42,18 +54,6 @@ export default function MetricsTable({
     }
     return [];
   }, [data, dataFilter, filterOptions]);
-
-  async function loadData() {
-    const data = await get(`/api/website/${websiteId}/rankings`, {
-      type,
-      start_at: +startDate,
-      end_at: +endDate,
-      domain: websiteDomain,
-    });
-
-    setData(data);
-    onDataLoad(data);
-  }
 
   const handleSetFormat = () => setFormat(state => !state);
 
@@ -76,15 +76,10 @@ export default function MetricsTable({
     return <div style={style}>{getRow(rankings[index])}</div>;
   };
 
-  useEffect(() => {
-    if (websiteId) {
-      loadData();
-    }
-  }, [websiteId, startDate, endDate, type]);
-
   return (
     <div className={classNames(styles.container, className)}>
-      {data ? (
+      {!data && <Loading />}
+      {data && (
         <>
           <div className={styles.header}>
             <div className={styles.title}>{title}</div>
@@ -94,9 +89,10 @@ export default function MetricsTable({
             </div>
           </div>
           <div className={styles.body}>
+            {rankings?.length === 0 && <NoData />}
             {limit
               ? rankings.map(row => getRow(row))
-              : data?.length > 0 && (
+              : rankings.length > 0 && (
                   <FixedSizeList height={500} itemCount={rankings.length} itemSize={30}>
                     {Row}
                   </FixedSizeList>
@@ -105,13 +101,13 @@ export default function MetricsTable({
           <div className={styles.footer}>
             {limit && data.length > limit && (
               <Button icon={<Arrow />} size="xsmall" onClick={() => onExpand(type)}>
-                <div>More</div>
+                <div>
+                  <FormattedMessage id="button.more" defaultMessage="More" />
+                </div>
               </Button>
             )}
           </div>
         </>
-      ) : (
-        <Loading />
       )}
     </div>
   );

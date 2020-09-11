@@ -1,16 +1,15 @@
 import React from 'react';
 import MetricsTable from './MetricsTable';
 import { deviceFilter } from 'lib/filters';
+import { FormattedMessage } from 'react-intl';
 
-export default function DevicesTable({ websiteId, startDate, endDate, limit, onExpand }) {
+export default function DevicesTable({ websiteId, limit, onExpand }) {
   return (
     <MetricsTable
-      title="Devices"
+      title={<FormattedMessage id="metrics.devices" defaultMessage="Devices" />}
       type="device"
-      metric="Visitors"
+      metric={<FormattedMessage id="metrics.visitors" defaultMessage="Visitors" />}
       websiteId={websiteId}
-      startDate={startDate}
-      endDate={endDate}
       limit={limit}
       dataFilter={deviceFilter}
       onExpand={onExpand}

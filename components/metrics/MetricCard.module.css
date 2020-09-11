@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 140px;
+  min-width: 120px;
+  margin-right: 20px;
 }
 
 .value {

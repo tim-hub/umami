@@ -1,6 +1,7 @@
 import 'promise-polyfill/src/polyfill';
 import 'unfetch/polyfill';
 import { post, hook, doNotTrack } from '../lib/web';
+import { removeTrailingSlash } from '../lib/url';
 
 (window => {
   const {
@@ -17,7 +18,10 @@ import { post, hook, doNotTrack } from '../lib/web';
   if (!script || (__DNT__ && doNotTrack())) return;
 
   const website = script.getAttribute('data-website-id');
-  const hostUrl = new URL(script.src).href.split('/').slice(0, -1).join('/');
+  const hostUrl = script.getAttribute('data-host-url');
+  const root = hostUrl
+    ? removeTrailingSlash(hostUrl)
+    : new URL(script.src).href.split('/').slice(0, -1).join('/');
   const screen = `${width}x${height}`;
   const listeners = [];
 
@@ -42,7 +46,7 @@ import { post, hook, doNotTrack } from '../lib/web';
       });
     }
 
-    return post(`${hostUrl}/api/collect`, {
+    return post(`${root}/api/collect`, {
       type,
       payload,
     });
@@ -54,15 +58,16 @@ import { post, hook, doNotTrack } from '../lib/web';
 
   /* Handle history */
 
-  const handlePush = (state, title, navaigatedUrl) => {
+  const handlePush = (state, title, url) => {
     removeEvents();
     currentRef = currentUrl;
+    const newUrl = url.toString();
 
-    if (navaigatedUrl.startsWith('http')) {
-      const url = new URL(navaigatedUrl);
-      currentUrl = `${url.pathname}${url.search}`;
+    if (newUrl.substring(0, 4) === 'http') {
+      const { pathname, search } = new URL(newUrl);
+      currentUrl = `${pathname}${search}`;
     } else {
-      currentUrl = navaigatedUrl;
+      currentUrl = newUrl;
     }
 
     pageView();
@@ -97,4 +102,8 @@ import { post, hook, doNotTrack } from '../lib/web';
   /* Start */
 
   pageView();
+
+  if (!window.umami) {
+    window.umami = event_value => collect('event', { event_type: 'custom', event_value });
+  }
 })(window);

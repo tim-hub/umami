@@ -3,24 +3,26 @@ import ButtonGroup from 'components/common/ButtonGroup';
 import { getDateRange } from 'lib/date';
 import styles from './QuickButtons.module.css';
 
-const options = {
-  '24h': '24hour',
-  '7d': '7day',
-  '30d': '30day',
-};
+const options = [
+  { label: '24h', value: '24hour' },
+  { label: '7d', value: '7day' },
+  { label: '30d', value: '30day' },
+];
 
 export default function QuickButtons({ value, onChange }) {
-  const selectedItem = Object.keys(options).find(key => options[key] === value);
+  const selectedItem = options.find(item => item.value === value)?.value;
 
-  function handleClick(value) {
-    onChange(getDateRange(options[value]));
+  function handleClick(selected) {
+    if (selected !== value) {
+      onChange(getDateRange(selected));
+    }
   }
 
   return (
     <ButtonGroup
       size="xsmall"
       className={styles.buttons}
-      items={Object.keys(options)}
+      items={options}
       selectedItem={selectedItem}
       onClick={handleClick}
     />

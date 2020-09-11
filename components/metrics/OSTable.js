@@ -1,16 +1,15 @@
 import React from 'react';
 import MetricsTable from './MetricsTable';
 import { osFilter } from 'lib/filters';
+import { FormattedMessage } from 'react-intl';
 
-export default function OSTable({ websiteId, startDate, endDate, limit, onExpand }) {
+export default function OSTable({ websiteId, limit, onExpand }) {
   return (
     <MetricsTable
-      title="Operating System"
+      title={<FormattedMessage id="metrics.operating-system" defaultMessage="Operating system" />}
       type="os"
-      metric="Visitors"
+      metric={<FormattedMessage id="metrics.visitors" defaultMessage="Visitors" />}
       websiteId={websiteId}
-      startDate={startDate}
-      endDate={endDate}
       limit={limit}
       dataFilter={osFilter}
       onExpand={onExpand}

@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { FormattedMessage } from 'react-intl';
 import { useRouter } from 'next/router';
-import WebsiteHeader from 'components/metrics/WebsiteHeader';
 import WebsiteChart from 'components/metrics/WebsiteChart';
 import Page from 'components/layout/Page';
 import Button from 'components/common/Button';
 import EmptyPlaceholder from 'components/common/EmptyPlaceholder';
+import useFetch from 'hooks/useFetch';
 import Arrow from 'assets/arrow-right.svg';
-import { get } from 'lib/web';
 import styles from './WebsiteList.module.css';
 
 export default function WebsiteList() {
-  const [data, setData] = useState();
   const router = useRouter();
-
-  async function loadData() {
-    setData(await get(`/api/websites`));
-  }
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  const { data } = useFetch('/api/websites');
 
   if (!data) {
     return null;
@@ -27,16 +19,27 @@ export default function WebsiteList() {
 
   return (
     <Page>
-      {data?.map(({ website_id, name }) => (
+      {data.map(({ website_id, name }) => (
         <div key={website_id} className={styles.website}>
-          <WebsiteHeader websiteId={website_id} name={name} showLink />
-          <WebsiteChart key={website_id} title={name} websiteId={website_id} />
+          <WebsiteChart websiteId={website_id} title={name} showLink />
         </div>
       ))}
       {data.length === 0 && (
-        <EmptyPlaceholder msg={"You don't have any websites configured."}>
+        <EmptyPlaceholder
+          msg={
+            <FormattedMessage
+              id="placeholder.message.no-websites-configured"
+              defaultMessage="You don't have any websites configured."
+            />
+          }
+        >
           <Button icon={<Arrow />} size="medium" onClick={() => router.push('/settings')}>
-            <div>Go to settings</div>
+            <div>
+              <FormattedMessage
+                id="placeholder.message.go-to-settings"
+                defaultMessage="Go to settings"
+              />
+            </div>
           </Button>
         </EmptyPlaceholder>
       )}
