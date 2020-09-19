@@ -9,9 +9,9 @@ WORKDIR /app
 EXPOSE 3000
 
 COPY package*.json /app/
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 COPY . /app
-RUN npm run build
+RUN yarn build
 
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
