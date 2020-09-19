@@ -9,7 +9,7 @@ ENV DATABASE_URL=$DATABASE_URL \
 WORKDIR /app
 EXPOSE 3000
 
-COPY package*.json /app/
+COPY package.json yarn.lock /app/
 RUN yarn install --frozen-lockfile
 
 COPY . /app
