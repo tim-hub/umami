@@ -4,3 +4,7 @@ Dockerfile
 .gitignore
 .DS_Store
 node_modules
+.next
+build
+.github
+captain-definition
