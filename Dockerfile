@@ -1,41 +1,24 @@
-# Build image
-FROM node:12.18-alpine AS build
+FROM node:12.18-alpine
+
 ARG DATABASE_TYPE
 ARG DATABASE_URL
 
 ENV DATABASE_URL=$DATABASE_URL \
     DATABASE_TYPE=$DATABASE_TYPE
-WORKDIR /build
 
-COPY package.json yarn.lock /build/
+WORKDIR /app
+EXPOSE 3000
 
-# Install only the production dependencies
-RUN yarn install --production
+RUN yarn config set --home enableTelemetry 0
+RUN yarn next telemetry disable
 
-# Cache these modules for production
-RUN cp -R node_modules/ prod_node_modules/
+COPY package.json yarn.lock /app/
+RUN yarn install --frozen-lockfile
 
-# Install development dependencies
-RUN yarn install
-
-COPY . /build
+COPY . /app
 RUN yarn build
 
-# Production image
-FROM node:12.18-alpine AS production
-WORKDIR /app
+# prune dev dependency
+# RUN yarn install --frozen-lockfile --production
 
-# Copy cached dependencies
-COPY --from=build /build/prod_node_modules ./node_modules
-
-# Copy generated Prisma client
-COPY --from=build /build/node_modules/.prisma ./node_modules/.prisma
-
-COPY --from=build /build/yarn.lock /build/package.json ./
-COPY --from=build /build/.next ./.next
-COPY --from=build /build/public ./public
-
-USER node
-
-EXPOSE 3000
 CMD ["yarn", "start"]
