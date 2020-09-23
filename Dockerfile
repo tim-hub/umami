@@ -29,7 +29,7 @@ WORKDIR /app
 COPY --from=build /build/prod_node_modules ./node_modules
 
 # Copy generated Prisma client
-COPY --from=build /build/node_modules/\.prisma/ ./node_modules/\.prisma/
+COPY --from=build /build/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=build /build/yarn.lock /build/package.json ./
 COPY --from=build /build/.next ./.next
