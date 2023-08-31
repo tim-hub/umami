@@ -26,7 +26,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN yarn build-docker
 
 # Production image, copy all the files and run next
-FROM keymetrics/pm2:18-alpine AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
@@ -35,7 +35,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-RUN yarn add npm-run-all dotenv prisma
+RUN yarn add npm-run-all dotenv prisma pm2
 
 # You only need to copy next.config.js if you are NOT using the default configuration
 COPY --from=builder /app/next.config.js .
