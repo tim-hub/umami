@@ -26,7 +26,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN yarn build-docker
 
 # Production image, copy all the files and run next
-FROM node:18-alpine AS runner
+FROM keymetrics/pm2:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
